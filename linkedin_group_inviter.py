@@ -101,7 +101,11 @@ class LinkedInGroupInviter:
         try:
             service = Service(ChromeDriverManager().install())
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
-            self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            # Try to hide webdriver property, ignore if already defined
+            try:
+                self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            except:
+                pass  # Property already defined, continue anyway
             self.wait = WebDriverWait(self.driver, 10)
             print("✅ Connected to existing Chrome browser!")
             return True
@@ -141,7 +145,7 @@ class LinkedInGroupInviter:
         delay = random.uniform(min_seconds, max_seconds)
         time.sleep(delay)
     
-    def find_checkboxes(self):
+    def find_checkboxes(self, silent=False):
         """Find all available checkboxes for inviting people"""
         possible_selectors = [
             "input[type='checkbox']",
@@ -158,7 +162,8 @@ class LinkedInGroupInviter:
                 elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
                 if elements:
                     checkboxes.extend(elements)
-                    print(f"✅ Found {len(elements)} checkboxes with selector: {selector}")
+                    if not silent:
+                        print(f"✅ Found {len(elements)} checkboxes with selector: {selector}")
             except Exception as e:
                 continue
         
@@ -169,6 +174,179 @@ class LinkedInGroupInviter:
                 unique_checkboxes.append(checkbox)
         
         return unique_checkboxes
+    
+    def fast_scroll_to_load_profiles(self, target_checkboxes="max"):
+        """BLAZING FAST LinkedIn scroll - optimized for thousands of profiles"""
+        print(f"\n🚀 BLAZING FAST SCROLL MODE: Racing through thousands of profiles!")
+        print("⚡ ZERO delays, maximum speed - watch the page FLY!")
+        
+        total_found = 0
+        total_selected = 0
+        scroll_count = 0
+        consecutive_no_new = 0
+        
+        # Track page changes
+        initial_height = self.driver.execute_script("return document.body.scrollHeight;")
+        print(f"🏁 Starting: {initial_height}px height")
+        
+        while True:
+            scroll_count += 1
+            
+            # Get current state quickly
+            current_height = self.driver.execute_script("return document.body.scrollHeight;")
+            
+            # ULTRA AGGRESSIVE MULTI-STRATEGY SCROLLING!
+            
+            # Strategy 1: Massive pixel jumps (100,000px each!)
+            for jump in range(10):  
+                self.driver.execute_script("window.scrollBy(0, 100000);")  # HUGE 100,000px jumps!
+            
+            # Strategy 2: Jump to bottom multiple times
+            for bottom_jump in range(3):
+                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight + 50000);") 
+            
+            # Strategy 3: Try to scroll to maximum possible values
+            self.driver.execute_script("window.scrollTo(0, 999999999);")  # Scroll to huge number
+            
+            # Strategy 4: Force refresh scroll calculations
+            self.driver.execute_script("""
+                document.body.scrollTop = document.body.scrollHeight;
+                document.documentElement.scrollTop = document.documentElement.scrollHeight;
+                window.pageYOffset = document.body.scrollHeight;
+            """) 
+            
+            # Strategy 5: Trigger LinkedIn-specific loading events
+            self.driver.execute_script("""
+                // Trigger intersection observer events
+                window.dispatchEvent(new Event('scroll'));
+                window.dispatchEvent(new Event('resize'));
+                document.dispatchEvent(new Event('scroll'));
+                document.dispatchEvent(new Event('DOMContentLoaded'));
+                
+                // Force focus and blur to trigger lazy loading
+                window.focus();
+                window.blur();
+                window.focus();
+                
+                // Trigger viewport events
+                window.dispatchEvent(new Event('orientationchange'));
+            """)
+            
+            # Trigger all scroll events instantly
+            self.driver.execute_script("""
+                window.dispatchEvent(new Event('scroll'));
+                window.dispatchEvent(new Event('resize')); 
+                document.dispatchEvent(new Event('scroll'));
+            """)
+            
+            # Look for load buttons and click them instantly (no delay)
+            try:
+                load_buttons = self.driver.find_elements(By.CSS_SELECTOR, 
+                    "button[aria-label*='more'], button[aria-label*='Show'], [data-control-name*='load'], .scaffold-finite-scroll__load-button")
+                for button in load_buttons:
+                    try:
+                        if button.is_displayed():
+                            self.driver.execute_script("arguments[0].click();", button)
+                    except:
+                        pass
+            except:
+                pass
+            
+            # Only minimal wait for LinkedIn to respond (reduced from 3s to 0.2s)
+            time.sleep(0.2)  
+            
+            # Check results quickly
+            new_height = self.driver.execute_script("return document.body.scrollHeight;")
+            height_changed = new_height > current_height
+            
+            # Count checkboxes quickly
+            all_checkboxes = self.find_checkboxes(silent=True)
+            unselected_checkboxes = [cb for cb in all_checkboxes if not cb.is_selected()]
+            current_available = len(unselected_checkboxes)
+            
+            # Progress update every 10 scrolls (not every scroll)
+            if scroll_count % 10 == 0:
+                height_increase = new_height - initial_height if height_changed else 0
+                print(f"⚡ Scroll #{scroll_count}: Height +{height_increase}px, {current_available} checkboxes found")
+            
+            # If we found new checkboxes, select them FAST
+            if current_available > total_found:
+                new_checkboxes = current_available - total_found
+                print(f"🎉 FOUND {new_checkboxes} NEW! Selecting instantly...")
+                
+                # LIGHTNING FAST SELECTION - mass select with single JavaScript execution
+                checkboxes_to_select = unselected_checkboxes[total_found:current_available]
+                selected_in_batch = 0
+                
+                # Method 1: Instant mass selection using single JavaScript call
+                try:
+                    # Build JavaScript to click all checkboxes at once
+                    js_clicks = []
+                    for i, checkbox in enumerate(checkboxes_to_select):
+                        js_clicks.append(f"arguments[{i}].click();")
+                    
+                    # Execute all clicks in one JavaScript call (FASTEST METHOD)
+                    if js_clicks:
+                        js_code = " ".join(js_clicks)
+                        self.driver.execute_script(js_code, *checkboxes_to_select)
+                        selected_in_batch = len(checkboxes_to_select)
+                        total_selected += selected_in_batch
+                        
+                        if target_checkboxes != "max" and total_selected >= target_checkboxes:
+                            print(f"🎯 TARGET {target_checkboxes} REACHED! Selected {total_selected}!")
+                            return total_selected
+                            
+                except Exception as e:
+                    # Fallback: Individual ultra-fast clicks with zero delays
+                    for checkbox in checkboxes_to_select:
+                        try:
+                            self.driver.execute_script("arguments[0].click();", checkbox)
+                            selected_in_batch += 1
+                            total_selected += 1
+                            # ABSOLUTELY NO DELAYS!
+                            
+                            if target_checkboxes != "max" and total_selected >= target_checkboxes:
+                                print(f"🎯 TARGET {target_checkboxes} REACHED! Selected {total_selected}!")
+                                return total_selected
+                        except:
+                            continue
+                
+                print(f"✅ Selected {selected_in_batch} instantly! Total: {total_selected}")
+                total_found = current_available
+                consecutive_no_new = 0
+                continue
+                
+            else:
+                consecutive_no_new += 1
+                # Only show status every 5 attempts (reduce spam)
+                if consecutive_no_new % 5 == 0:
+                    print(f"🔍 Still searching... {consecutive_no_new}/20 attempts, {total_selected} selected so far")
+            
+            # INFINITE MODE - Only stop if user presses Ctrl+C or finds checkboxes!
+            # Remove the 20 attempt limit completely for unlimited scrolling
+            
+            # Only give status updates, never stop automatically
+            if consecutive_no_new >= 50:  # Much higher threshold for status
+                height_increase = new_height - initial_height
+                print(f"\n📊 STATUS UPDATE after {scroll_count} scrolls:")
+                print(f"   - Height increased: +{height_increase}px")
+                print(f"   - Checkboxes found so far: {total_selected}")
+                print(f"   - Consecutive attempts without new checkboxes: {consecutive_no_new}")
+                print(f"   - Still searching... (This could take hundreds of scrolls!)")
+                print(f"   - Press Ctrl+C if you want to stop\n")
+                
+                # Reset counter to continue indefinitely
+                consecutive_no_new = 0
+                
+                # Don't break - keep going infinitely!
+            
+            # For max mode, continue at maximum speed
+            if target_checkboxes == "max":
+                continue
+                
+        print(f"\n⚡ BLAZING FAST SCROLL COMPLETE! {total_selected} checkboxes selected in {scroll_count} attempts")
+        return total_selected
     
     def find_invite_button(self):
         """Find the invite button"""
@@ -197,13 +375,27 @@ class LinkedInGroupInviter:
     
     def select_checkboxes(self, max_selections):
         """Main function to select checkboxes only - no invite button clicking"""
-        print(f"\n📋 Starting to select up to {max_selections} checkboxes...")
+        # First, find all available checkboxes to get the total count
+        all_checkboxes = self.find_checkboxes()
+        unselected_checkboxes = [cb for cb in all_checkboxes if not cb.is_selected()]
+        total_available = len(unselected_checkboxes)
+        
+        # If max_selections is "max" or greater than available, select all
+        if max_selections == "max" or max_selections >= total_available:
+            actual_max = total_available
+            print(f"\n📋 Selecting ALL {actual_max} available checkboxes...")
+        else:
+            actual_max = max_selections
+            print(f"\n📋 Starting to select up to {actual_max} checkboxes out of {total_available} available...")
         
         total_selected = 0
-        batch_size = min(10, max_selections)  # Process in bigger batches for speed
+        batch_size = min(10, actual_max)  # Process in bigger batches for speed
         
-        while total_selected < max_selections:
-            print(f"\n📊 Progress: {total_selected}/{max_selections} checkboxes selected")
+        while total_selected < actual_max:
+            if max_selections == "max":
+                print(f"\n📊 Progress: {total_selected} checkboxes selected (selecting all available)")
+            else:
+                print(f"\n📊 Progress: {total_selected}/{actual_max} checkboxes selected")
             
             # Find available checkboxes
             checkboxes = self.find_checkboxes()
@@ -219,8 +411,11 @@ class LinkedInGroupInviter:
                 print("✅ All available checkboxes are already selected!")
                 break
             
-            # Select checkboxes for this batch
-            remaining_selections = max_selections - total_selected
+            # Select checkboxes for this batch  
+            if max_selections == "max":
+                remaining_selections = actual_max - total_selected
+            else:
+                remaining_selections = max_selections - total_selected
             batch_count = min(batch_size, remaining_selections, len(unselected_checkboxes))
             
             selected_count = 0
@@ -252,7 +447,7 @@ class LinkedInGroupInviter:
             print(f"✅ Selected {selected_count} checkboxes in this batch")
             
             # Much shorter delay between batches for speed
-            if total_selected < max_selections and total_selected < len(unselected_checkboxes):
+            if total_selected < actual_max and total_selected < len(unselected_checkboxes):
                 delay_time = random.uniform(0.5, 1.0)  # Very short break
                 print(f"⚡ Quick {delay_time:.1f}s break before next batch...")
                 time.sleep(delay_time)
@@ -264,30 +459,11 @@ class LinkedInGroupInviter:
         return total_selected
     
     def run(self):
-        """Main execution function"""
+        """Main execution function with enhanced workflow"""
         print("🤖 LinkedIn Group Invitation Automator")
         print("="*40)
         
-        # Get user input
-        try:
-            max_invites = int(input("How many people would you like to invite? "))
-            if max_invites <= 0:
-                print("❌ Please enter a positive number")
-                return
-        except ValueError:
-            print("❌ Please enter a valid number")
-            return
-        
-        # Safety warning
-        if max_invites > 50:
-            print(f"\n⚠️  WARNING: Selecting {max_invites} checkboxes at once might be too many!")
-            print("Recommendation: Maximum is 50 checkboxes.")
-            confirm = input("Do you want to continue? (y/N): ").lower()
-            if confirm != 'y':
-                print("Cancelled by user")
-                return
-        
-        # Setup driver
+        # Setup driver first
         if not self.setup_driver():
             return
         
@@ -296,11 +472,102 @@ class LinkedInGroupInviter:
             if not self.check_linkedin_page():
                 return
             
-            # Start selecting checkboxes
-            total_selected = self.select_checkboxes(max_invites)
+            # STEP 1: Initial scan for checkboxes
+            print("\n🔍 Scanning current page for checkboxes...")
+            all_checkboxes = self.find_checkboxes()
+            unselected_checkboxes = [cb for cb in all_checkboxes if not cb.is_selected()]
+            current_available = len(unselected_checkboxes)
             
+            print(f"📊 Found {current_available} checkboxes currently visible")
+            
+            # STEP 2: Decision based on available checkboxes
+            if current_available >= 100:  # Enough checkboxes available
+                print(f"✅ Good! {current_available} checkboxes are available for selection.")
+                
+                # Get user input for selection
+                user_input = input(f"How many would you like to select? (Enter number or 'max' for all {current_available}): ").strip().lower()
+                
+                if user_input == "max":
+                    max_invites = "max"
+                    print(f"✅ Will select ALL {current_available} visible checkboxes!")
+                else:
+                    try:
+                        max_invites = int(user_input)
+                        if max_invites <= 0:
+                            print("❌ Please enter a positive number or 'max'")
+                            return
+                        if max_invites > current_available:
+                            max_invites = current_available
+                            print(f"⚠️  Only {current_available} available, selecting all of them.")
+                    except ValueError:
+                        print("❌ Please enter a valid number or 'max'")
+                        return
+                
+                # Safety warning
+                if max_invites == "max" or max_invites > 50:
+                    warning_text = "ALL checkboxes" if max_invites == "max" else f"{max_invites} checkboxes"
+                    print(f"\n⚠️  WARNING: Selecting {warning_text} at once might be many!")
+                    confirm = input("Do you want to continue? (y/N): ").lower()
+                    if confirm != 'y':
+                        print("Cancelled by user")
+                        return
+                
+                # Select from currently visible checkboxes
+                total_selected = self.select_checkboxes(max_invites)
+                
+            else:  # Few or no checkboxes available (< 100)
+                if current_available == 0:
+                    print("❌ No checkboxes found on current page.")
+                else:
+                    print(f"⚠️  Only {current_available} checkboxes found (less than 100).")
+                
+                print("This usually means people above have already been invited.")
+                print("I can scroll down to load more profiles and find more checkboxes!")
+                
+                # Ask for scroll and select mode
+                scroll_input = input("\nHow many checkboxes should I scroll and find? (Enter number or 'max' for unlimited): ").strip().lower()
+                
+                if scroll_input == "max":
+                    print("✅ Unlimited scrolling mode activated!")
+                    print("⚡ I will keep scrolling and selecting until you press Ctrl+C or no more profiles are found.")
+                    confirm = input("\nReady to start unlimited scrolling? (y/N): ").lower()
+                    if confirm != 'y':
+                        print("Cancelled by user")
+                        return
+                    
+                    # Start unlimited scroll mode
+                    try:
+                        total_selected = self.fast_scroll_to_load_profiles("max")
+                    except KeyboardInterrupt:
+                        print("\n\n⏹️  Scrolling stopped by user (Ctrl+C)")
+                        return
+                        
+                else:
+                    try:
+                        target_checkboxes = int(scroll_input)
+                        if target_checkboxes <= 0:
+                            print("❌ Please enter a positive number or 'max'")
+                            return
+                    except ValueError:
+                        print("❌ Please enter a valid number or 'max'")
+                        return
+                    
+                    print(f"✅ Will scroll and find {target_checkboxes} checkboxes")
+                    
+                    # Safety warning for large numbers
+                    if target_checkboxes > 100:
+                        print(f"\n⚠️  WARNING: Scrolling to find {target_checkboxes} checkboxes might take a while!")
+                        confirm = input("Do you want to continue? (y/N): ").lower()
+                        if confirm != 'y':
+                            print("Cancelled by user")
+                            return
+                    
+                    # Start targeted scroll mode
+                    total_selected = self.fast_scroll_to_load_profiles(target_checkboxes)
+            
+            # Final result
             if total_selected > 0:
-                print(f"\n✅ Success! Selected {total_selected} checkboxes")
+                print(f"\n🎉 SUCCESS! Selected {total_selected} checkboxes total")
                 print("👆 You can now manually click the 'Invite' button to send the invitations!")
             else:
                 print("\n❌ No checkboxes were selected")
@@ -313,7 +580,7 @@ class LinkedInGroupInviter:
         
         finally:
             # Never close browser or driver connection
-            print("\n✅ Checkbox selection complete! Browser remains open.")
+            print("\n✅ Tool completed! Browser remains open.")
             print("👋 You can now click 'Invite' manually and continue using LinkedIn normally.")
             # Don't quit driver or close browser
             pass

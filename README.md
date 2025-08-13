@@ -1,19 +1,25 @@
-# LinkedIn Checkbox Selector 🤖
+# LinkedIn Group Invitation Automator 🚀
 
-A Python automation tool that selects checkboxes for LinkedIn group invitations, saving you time from manually clicking each checkbox. The tool connects to your existing Chrome browser session and only selects checkboxes - you maintain full control over sending invitations.
+> **Latest Version 2.0** - Now with BLAZING FAST unlimited scrolling and smart automation!
+
+A powerful Python automation tool that revolutionizes LinkedIn group invitations. Connect to your existing Chrome browser, automatically scroll through thousands of profiles, and select checkboxes at lightning speed. You maintain full control - the tool only selects checkboxes, you click "Invite".
 
 ## ⚠️ Important Disclaimer
 
 **USE AT YOUR OWN RISK!** This tool may violate LinkedIn's Terms of Service. Your account could be restricted or banned. The author is not responsible for any consequences. Use responsibly and sparingly.
 
-## ✨ Features
+## ✨ Revolutionary Features
 
-- 🎯 **Smart Checkbox Selection**: Automatically finds and selects LinkedIn invitation checkboxes
-- 🔗 **Existing Browser Integration**: Connects to your current Chrome session (no new windows)
-- ⚡ **High Speed**: Selects up to 50 checkboxes in ~10 seconds
+- ⚡ **BLAZING FAST Mode**: Unlimited scrolling through thousands of profiles in seconds
+- 🎯 **Smart Checkbox Detection**: Advanced multi-selector checkbox finding technology
+- 🔗 **Seamless Browser Integration**: Connects to your existing Chrome session (no new windows)
+- 🚀 **Lightning Speed**: Process hundreds of checkboxes in under a minute
 - 🛡️ **Safe Control**: Only selects checkboxes - you manually click "Invite" button
-- 🔄 **Reusable Session**: Use multiple times without re-logging in
-- 🚫 **No Browser Closing**: Your browser stays open when tool exits
+- 🔄 **Persistent Sessions**: Use multiple times without re-logging in
+- 🚫 **Non-Intrusive**: Your browser stays open when tool exits
+- 📊 **Smart Progress Tracking**: Real-time updates on scrolling and selection progress
+- 🎛️ **Flexible Modes**: Choose specific numbers or unlimited "max" mode
+- 🔧 **Advanced Error Handling**: Graceful recovery from connection issues
 
 ## 📋 Requirements
 
@@ -69,10 +75,11 @@ python3 linkedin_group_inviter.py
 
 #### Step 5: Follow Tool Instructions
 1. Accept the risk warning by typing `y`
-2. Enter number of checkboxes to select (max 50)
-3. Press ENTER when ready
-4. Tool will connect to your Chrome and start selecting checkboxes
-5. When done, manually click the "Invite" button in Chrome
+2. Choose between selecting visible checkboxes or using BLAZING FAST scroll mode
+3. Enter number of checkboxes to select (or 'max' for unlimited scrolling)
+4. Press ENTER when ready
+5. Tool will connect to your Chrome and start selecting checkboxes
+6. When done, manually click the "Invite" button in Chrome
 
 ### 🔄 **SUBSEQUENT USES (Super Easy!)**
 
@@ -88,10 +95,22 @@ python3 linkedin_group_inviter.py
 
 ## ⚡ Performance
 
+- **BLAZING FAST Mode**: Can scroll through thousands of profiles in minutes
 - **Speed**: 50 checkboxes in ~10 seconds
 - **Batch Size**: Processes 10 checkboxes at a time
 - **Delay**: 0.1-0.2 seconds between selections
 - **Break Time**: 0.5-1 second between batches
+
+## 🆕 What's New in Version 2.0
+
+- **BLAZING FAST Scrolling**: New unlimited scrolling mode to find thousands of profiles
+- **Improved Connection**: Better Chrome session detection and stability
+- **Enhanced UI**: Clearer progress indicators and status updates
+- **Multi-Strategy Scrolling**: Aggressive scrolling techniques to load more profiles
+- **Smart Checkbox Detection**: Better checkbox finding with multiple selectors
+- **Instant Selection**: Ultra-fast batch selection with zero delays
+- **Flexible Modes**: Choose between normal or unlimited modes
+- **Better Error Handling**: Graceful recovery from connection issues
 
 ## 🛡️ Safety Features
 
