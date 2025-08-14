@@ -260,10 +260,21 @@ class LinkedInGroupInviter:
             new_height = self.driver.execute_script("return document.body.scrollHeight;")
             height_changed = new_height > current_height
             
-            # Count checkboxes quickly
-            all_checkboxes = self.find_checkboxes(silent=True)
-            unselected_checkboxes = [cb for cb in all_checkboxes if not cb.is_selected()]
-            current_available = len(unselected_checkboxes)
+            # Count checkboxes quickly - handle stale elements
+            try:
+                all_checkboxes = self.find_checkboxes(silent=True)
+                unselected_checkboxes = []
+                for cb in all_checkboxes:
+                    try:
+                        if not cb.is_selected():
+                            unselected_checkboxes.append(cb)
+                    except Exception:
+                        # Skip stale elements
+                        continue
+                current_available = len(unselected_checkboxes)
+            except Exception:
+                current_available = 0
+                unselected_checkboxes = []
             
             # Progress update every 10 scrolls (not every scroll)
             if scroll_count % 10 == 0:
@@ -279,15 +290,28 @@ class LinkedInGroupInviter:
                 checkboxes_to_select = unselected_checkboxes[total_found:current_available]
                 selected_in_batch = 0
                 
-                # Method 1: Instant mass selection using single JavaScript call
+                # Method 1: Instant mass selection with stale element protection
                 try:
-                    # Build JavaScript to click all checkboxes at once
-                    js_clicks = []
-                    for i, checkbox in enumerate(checkboxes_to_select):
-                        js_clicks.append(f"arguments[{i}].click();")
+                    # Re-find fresh elements to avoid stale references
+                    fresh_checkboxes = self.find_checkboxes(silent=True)
+                    fresh_unselected = []
+                    for cb in fresh_checkboxes:
+                        try:
+                            if not cb.is_selected():
+                                fresh_unselected.append(cb)
+                        except Exception:
+                            continue
                     
-                    # Execute all clicks in one JavaScript call (FASTEST METHOD)
-                    if js_clicks:
+                    # Only select new ones we haven't selected yet
+                    checkboxes_to_select = fresh_unselected[total_found:] if len(fresh_unselected) > total_found else []
+                    
+                    # Build JavaScript to click all checkboxes at once
+                    if checkboxes_to_select:
+                        js_clicks = []
+                        for i, checkbox in enumerate(checkboxes_to_select):
+                            js_clicks.append(f"arguments[{i}].click();")
+                        
+                        # Execute all clicks in one JavaScript call (FASTEST METHOD)
                         js_code = " ".join(js_clicks)
                         self.driver.execute_script(js_code, *checkboxes_to_select)
                         selected_in_batch = len(checkboxes_to_select)
@@ -298,18 +322,24 @@ class LinkedInGroupInviter:
                             return total_selected
                             
                 except Exception as e:
-                    # Fallback: Individual ultra-fast clicks with zero delays
-                    for checkbox in checkboxes_to_select:
+                    print(f"⚠️ Batch method failed: {e}, using individual clicks...")
+                    # Fallback: Individual ultra-fast clicks with stale element protection
+                    fresh_checkboxes = self.find_checkboxes(silent=True)
+                    for checkbox in fresh_checkboxes:
                         try:
+                            # Check if already selected
+                            if checkbox.is_selected():
+                                continue
+                                
                             self.driver.execute_script("arguments[0].click();", checkbox)
                             selected_in_batch += 1
                             total_selected += 1
-                            # ABSOLUTELY NO DELAYS!
                             
                             if target_checkboxes != "max" and total_selected >= target_checkboxes:
                                 print(f"🎯 TARGET {target_checkboxes} REACHED! Selected {total_selected}!")
                                 return total_selected
-                        except:
+                        except Exception as stale_e:
+                            # Skip stale elements
                             continue
                 
                 print(f"✅ Selected {selected_in_batch} instantly! Total: {total_selected}")
@@ -403,8 +433,15 @@ class LinkedInGroupInviter:
                 print("❌ No checkboxes found. Please make sure you're on the correct page.")
                 break
             
-            # Filter out already selected checkboxes
-            unselected_checkboxes = [cb for cb in checkboxes if not cb.is_selected()]
+            # Filter out already selected checkboxes with stale element protection
+            unselected_checkboxes = []
+            for cb in checkboxes:
+                try:
+                    if not cb.is_selected():
+                        unselected_checkboxes.append(cb)
+                except Exception:
+                    # Skip stale elements
+                    continue
             print(f"Found {len(checkboxes)} total checkboxes, {len(unselected_checkboxes)} unselected")
             
             if not unselected_checkboxes:
@@ -475,7 +512,14 @@ class LinkedInGroupInviter:
             # STEP 1: Initial scan for checkboxes
             print("\n🔍 Scanning current page for checkboxes...")
             all_checkboxes = self.find_checkboxes()
-            unselected_checkboxes = [cb for cb in all_checkboxes if not cb.is_selected()]
+            unselected_checkboxes = []
+            for cb in all_checkboxes:
+                try:
+                    if not cb.is_selected():
+                        unselected_checkboxes.append(cb)
+                except Exception:
+                    # Skip stale elements
+                    continue
             current_available = len(unselected_checkboxes)
             
             print(f"📊 Found {current_available} checkboxes currently visible")
