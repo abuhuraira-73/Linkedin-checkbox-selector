@@ -207,4 +207,4 @@ This project is provided as-is for educational purposes. Use at your own risk.
 
 ---
 
-**Made with ❤️ for automation enthusiasts. Use responsibly!**
+**Made with ❤️ for automation enthusiasts. Use responsibly hehe!**
